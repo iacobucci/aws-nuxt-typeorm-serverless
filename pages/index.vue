@@ -1,21 +1,13 @@
 <script setup lang="ts">
 
-const env = ref(null)
-const hostname = ref(null)
-const port = ref(null)
-const name = ref(null)
-const username = ref(null)
-const password = ref(null)
+const { data } = await useFetch('/api/getinfo')
 
-onMounted(async () => {
-	const response = await $fetch('/api/getinfo') as any
-	env.value = response.env
-	hostname.value = response.hostname
-	port.value = response.port
-	name.value = response.name
-	username.value = response.username
-	password.value = response.password
-})
+const env = computed(() => data.value?.env ?? null)
+const hostname = computed(() => data.value?.hostname ?? null)
+const port = computed(() => data.value?.port ?? null)
+const name = computed(() => data.value?.name ?? null)
+const username = computed(() => data.value?.username ?? null)
+const password = computed(() => data.value?.password ?? null)
 
 </script>
 
