@@ -101,39 +101,9 @@ Resources:
       SecurityGroupEgress:
         - IpProtocol: -1
           CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: !Ref DBPort
-          ToPort: !Ref DBPort
-          DestinationSecurityGroupId: !Ref DBSecurityGroup
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: 0.0.0.0/0  # Per connessioni HTTPS esterne
-        - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-          CidrIp: 0.0.0.0/0  # Per connessioni HTTP esterne
-        - IpProtocol: tcp
-          FromPort: 53
-          ToPort: 53
-          CidrIp: 0.0.0.0/0  # Per DNS
-        - IpProtocol: udp
-          FromPort: 53
-          ToPort: 53
-          CidrIp: 0.0.0.0/0  # Per DNS
       Tags:
         - Key: Name
           Value: !Sub ${AWS::StackName}-lambda-sg
-
-  # Add ingress rule to DB security group from Lambda security group
-  DBSecurityGroupIngress:
-    Type: AWS::EC2::SecurityGroupIngress
-    Properties:
-      GroupId: !GetAtt DBSecurityGroup.GroupId
-      IpProtocol: tcp
-      FromPort: !Ref DBPort
-      ToPort: !Ref DBPort
-      SourceSecurityGroupId: !GetAtt LambdaSecurityGroup.GroupId
 
   # DB Subnet Group
   DBSubnetGroup:
@@ -259,8 +229,8 @@ Resources:
   LambdaFunctionUrl:
     Type: AWS::Lambda::Url
     Properties:
-      AuthType: NONE  # Oppure AWS_IAM se hai bisogno di autenticazione
-      InvokeMode: BUFFERED  # Opzioni: BUFFERED o RESPONSE_STREAM
+      AuthType: NONE # Oppure AWS_IAM se hai bisogno di autenticazione
+      InvokeMode: BUFFERED # Opzioni: BUFFERED o RESPONSE_STREAM
       TargetFunctionArn: !GetAtt LambdaFunction.Arn
       Cors:
         AllowCredentials: true
@@ -270,15 +240,15 @@ Resources:
           - "*"
         AllowOrigins:
           - "*"
-        MaxAge: 86400  # 24 ore
-  
+        MaxAge: 86400 # 24 ore
+
   LambdaFunctionUrlPermission:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunctionUrl
       FunctionName: !Ref LambdaFunction
       Principal: "*"
-      FunctionUrlAuthType: NONE  # Deve corrispondere all'AuthType sopra
+      FunctionUrlAuthType: NONE # Deve corrispondere all'AuthType sopra
 
 Outputs:
   LambdaRoleARN:
@@ -289,12 +259,6 @@ Outputs:
         - Arn
     Export:
       Name: !Ref "LambdaRoleArnName"
-  ApiGatewayInvokeURL:
-    Value: !Sub https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com
-
-  CloudFrontURL:
-    Description: "CloudFront Distribution Domain Name"
-    Value: !Sub "https://${CloudFrontDistribution.DomainName}"
 
   DatabaseEndpoint:
     Description: The connection endpoint for the RDS instance
