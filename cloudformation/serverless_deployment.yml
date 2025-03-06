@@ -1,0 +1,145 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Test website SSR with AWS Lambda
+Parameters:
+  LambdaBucket:
+    Type: String
+    Description: AWS bucket, where lambda function is stored
+  LambdaUrl:
+    Type: String
+    Description: Path of lambda
+  LambdaRoleName:
+    Type: String
+    Description: Name of the lambda role
+  LambdaName:
+    Type: String
+    Description: Name of the lambda function
+  LambdaRoleArnName:
+    Type: String
+    Description: ARN Name of the role attached with lambda function
+  LambdaFunctionArnName:
+    Type: String
+    Description: Name of the lambda function ARN
+  ApiGatewayStageName:
+    Type: String
+    Description: ApiGateway stage name
+    Default: "prod"
+  ApiGatewayName:
+    Type: String
+    Description: ApiGateway name
+
+Resources:
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Ref "LambdaRoleName"
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action: "sts:AssumeRole"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/AWSLambdaExecute"
+        - "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+        - "arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess"
+        - "arn:aws:iam::aws:policy/AmazonKinesisFullAccess"
+      Path: "/"
+
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    DependsOn:
+      - LambdaExecutionRole
+    Properties:
+      FunctionName: !Ref "LambdaName"
+      Description: LambdaFunction for test website
+      Runtime: "nodejs18.x"
+      Code:
+        S3Bucket: !Ref "LambdaBucket"
+        S3Key: !Ref "LambdaUrl"
+      Handler: .output/server/index.handler
+      MemorySize: 256
+      Timeout: 100
+      Role: !GetAtt "LambdaExecutionRole.Arn"
+
+  ApiGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Description: Test Web API Gateway
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+      BinaryMediaTypes: ["*/*"]
+      DisableExecuteApiEndpoint: false
+      MinimumCompressionSize: 100
+      Name: !Ref "ApiGatewayName"
+
+  ApiGatewayRootMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: ANY
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
+          - lambdaArn: !GetAtt LambdaFunction.Arn
+      ResourceId: !GetAtt ApiGateway.RootResourceId
+      RestApiId: !Ref ApiGateway
+
+  ApiGatewayRootResource:
+    Type: AWS::ApiGateway::Resource
+    DependsOn:
+      - ApiGatewayRootMethod
+    Properties:
+      RestApiId: !Ref ApiGateway
+      ParentId: !GetAtt ApiGateway.RootResourceId
+      PathPart: "{proxy+}"
+
+  ApiGatewayResourceProxyMethod:
+    Type: AWS::ApiGateway::Method
+    DependsOn:
+      - ApiGatewayRootResource
+    Properties:
+      AuthorizationType: NONE
+      HttpMethod: ANY
+      Integration:
+        IntegrationHttpMethod: POST
+        Type: AWS_PROXY
+        Uri: !Sub
+          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
+          - lambdaArn: !GetAtt LambdaFunction.Arn
+      ResourceId: !Ref ApiGatewayRootResource
+      RestApiId: !Ref ApiGateway
+
+  LambdaApiGatewayInvoke:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !GetAtt LambdaFunction.Arn
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*/*/*
+
+  ApiGatewayDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - ApiGatewayResourceProxyMethod
+    Properties:
+      RestApiId: !Ref ApiGateway
+      StageName: !Ref ApiGatewayStageName
+
+Outputs:
+  LambdaRoleARN:
+    Description: Role for Lambda execution.
+    Value:
+      Fn::GetAtt:
+        - LambdaExecutionRole
+        - Arn
+    Export:
+      Name: !Ref "LambdaRoleArnName"
+  ApiGatewayInvokeURL:
+    Value: !Sub https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${ApiGatewayStageName}

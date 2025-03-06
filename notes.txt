@@ -1,0 +1,11 @@
+app ssg
+
+cloudfront
+	s3
+		sito statico pre renderizzato
+
+lambda
+	nuxt
+		api raggiungibile da cloudfront
+	typeorm
+		aurora
