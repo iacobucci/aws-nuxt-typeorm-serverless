@@ -101,6 +101,26 @@ Resources:
       SecurityGroupEgress:
         - IpProtocol: -1
           CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: !Ref DBPort
+          ToPort: !Ref DBPort
+          DestinationSecurityGroupId: !Ref DBSecurityGroup
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0  # Per connessioni HTTPS esterne
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0  # Per connessioni HTTP esterne
+        - IpProtocol: tcp
+          FromPort: 53
+          ToPort: 53
+          CidrIp: 0.0.0.0/0  # Per DNS
+        - IpProtocol: udp
+          FromPort: 53
+          ToPort: 53
+ 	        CidrIp: 0.0.0.0/0  # Per DNS
       Tags:
         - Key: Name
           Value: !Sub ${AWS::StackName}-lambda-sg
@@ -236,104 +256,29 @@ Resources:
           DB_PASSWORD: !Ref DBPassword
           NODE_ENV: production
 
-  ApiGateway:
-    Type: AWS::ApiGateway::RestApi
+  LambdaFunctionUrl:
+    Type: AWS::Lambda::Url
     Properties:
-      Description: Test Web API Gateway
-      EndpointConfiguration:
-        Types:
-          - REGIONAL
-      BinaryMediaTypes: ["*/*"]
-      DisableExecuteApiEndpoint: false
-      MinimumCompressionSize: 100
-      Name: !Ref "ApiGatewayName"
-
-  ApiGatewayRootMethod:
-    Type: AWS::ApiGateway::Method
-    Properties:
-      AuthorizationType: NONE
-      HttpMethod: ANY
-      Integration:
-        IntegrationHttpMethod: POST
-        Type: AWS_PROXY
-        Uri: !Sub
-          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
-          - lambdaArn: !GetAtt LambdaFunction.Arn
-      ResourceId: !GetAtt ApiGateway.RootResourceId
-      RestApiId: !Ref ApiGateway
-
-  ApiGatewayRootResource:
-    Type: AWS::ApiGateway::Resource
-    DependsOn:
-      - ApiGatewayRootMethod
-    Properties:
-      RestApiId: !Ref ApiGateway
-      ParentId: !GetAtt ApiGateway.RootResourceId
-      PathPart: "{proxy+}"
-
-  ApiGatewayResourceProxyMethod:
-    Type: AWS::ApiGateway::Method
-    DependsOn:
-      - ApiGatewayRootResource
-    Properties:
-      AuthorizationType: NONE
-      HttpMethod: ANY
-      Integration:
-        IntegrationHttpMethod: POST
-        Type: AWS_PROXY
-        Uri: !Sub
-          - arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${lambdaArn}/invocations
-          - lambdaArn: !GetAtt LambdaFunction.Arn
-      ResourceId: !Ref ApiGatewayRootResource
-      RestApiId: !Ref ApiGateway
-
-  LambdaApiGatewayInvoke:
+      AuthType: NONE  # Oppure AWS_IAM se hai bisogno di autenticazione
+      InvokeMode: BUFFERED  # Opzioni: BUFFERED o RESPONSE_STREAM
+      TargetFunctionArn: !GetAtt LambdaFunction.Arn
+      Cors:
+        AllowCredentials: true
+        AllowHeaders:
+          - "*"
+        AllowMethods:
+          - "*"
+        AllowOrigins:
+          - "*"
+        MaxAge: 86400  # 24 ore
+  
+  LambdaFunctionUrlPermission:
     Type: AWS::Lambda::Permission
     Properties:
-      Action: lambda:InvokeFunction
-      FunctionName: !GetAtt LambdaFunction.Arn
-      Principal: apigateway.amazonaws.com
-      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${ApiGateway}/*/*/*
-
-  ApiGatewayDeployment:
-    Type: AWS::ApiGateway::Deployment
-    DependsOn:
-      - ApiGatewayResourceProxyMethod
-    Properties:
-      RestApiId: !Ref ApiGateway
-      StageName: "prod"
-
-  CloudFrontDistribution:
-    Type: AWS::CloudFront::Distribution
-    Properties:
-      DistributionConfig:
-        Enabled: true
-        Origins:
-          - Id: ApiGatewayOrigin
-            DomainName: !Sub "${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com"
-            OriginPath: "/prod" # Include lo stage nel path di origine
-            CustomOriginConfig:
-              HTTPSPort: 443
-              OriginProtocolPolicy: https-only
-        DefaultCacheBehavior:
-          TargetOriginId: ApiGatewayOrigin
-          ViewerProtocolPolicy: redirect-to-https
-          ForwardedValues:
-            QueryString: true
-            Headers:
-              - Accept
-              - Authorization
-              - Referer
-            Cookies:
-              Forward: all
-          AllowedMethods:
-            - DELETE
-            - GET
-            - HEAD
-            - OPTIONS
-            - PATCH
-            - POST
-            - PUT
+      Action: lambda:InvokeFunctionUrl
+      FunctionName: !Ref LambdaFunction
+      Principal: "*"
+      FunctionUrlAuthType: NONE  # Deve corrispondere all'AuthType sopra
 
 Outputs:
   LambdaRoleARN:
@@ -358,3 +303,7 @@ Outputs:
   DatabaseEndpoint2:
     Description: The connection endpoint for the RDS instance
     Value: !GetAtt DBInstance.Endpoint.Address
+
+  LambdaFunctionUrl:
+    Description: "URL pubblico per la Lambda function"
+    Value: !GetAtt LambdaFunctionUrl.FunctionUrl
