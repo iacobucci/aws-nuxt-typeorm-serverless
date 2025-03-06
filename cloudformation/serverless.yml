@@ -154,7 +154,7 @@ Resources:
       DBClusterIdentifier: !Ref DBCluster
       Engine: aurora-postgresql
       DBInstanceClass: db.serverless
-      PubliclyAccessible: false
+      PubliclyAccessible: true
       DBParameterGroupName: default.aurora-postgresql14
       Tags:
         - Key: Name
