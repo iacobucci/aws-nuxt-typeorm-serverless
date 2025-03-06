@@ -3,6 +3,17 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   Test website SSR with AWS Lambda
 Parameters:
+  # parametri provenienti da github actions, presi dalla vpc di default
+  VpcId:
+    Description: VPC ID
+    Type: AWS::EC2::VPC::Id
+  PublicSubnetOne:
+    Description: Subnet ID
+    Type: AWS::EC2::Subnet::Id
+  PublicSubnetTwo:
+    Description: Subnet ID
+    Type: AWS::EC2::Subnet::Id
+
   LambdaBucket:
     Type: String
     Description: AWS bucket, where lambda function is stored
@@ -54,6 +65,101 @@ Parameters:
     MinValue: 0.5
 
 Resources:
+  DBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for PostgreSQL database
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: !Ref DBPort
+          ToPort: !Ref DBPort
+          SourceSecurityGroupId: !Ref LambdaSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-db-sg
+
+  # Security Group for Lambda
+  LambdaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Lambda function
+      VpcId: !Ref VpcId
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-lambda-sg
+
+  # Add ingress rule to DB security group from Lambda security group
+  DBSecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !GetAtt DBSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: !Ref DBPort
+      ToPort: !Ref DBPort
+      SourceSecurityGroupId: !GetAtt LambdaSecurityGroup.GroupId
+
+  # DB Subnet Group
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for PostgreSQL database
+      SubnetIds:
+        - !Ref PublicSubnetOne
+        - !Ref PublicSubnetTwo
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-db-subnet-group
+
+  # DB Cluster Parameter Group
+  DBClusterParameterGroup:
+    Type: AWS::RDS::DBClusterParameterGroup
+    Properties:
+      Description: Aurora PostgreSQL Cluster Parameter Group
+      Family: aurora-postgresql14
+      Parameters:
+        shared_preload_libraries: auto_explain,pg_stat_statements,pg_hint_plan
+        log_statement: all
+        log_min_duration_statement: "1000"
+
+  # Aurora PostgreSQL Serverless Cluster
+  DBCluster:
+    Type: AWS::RDS::DBCluster
+    Properties:
+      Engine: aurora-postgresql
+      EngineVersion: "14.6"
+      DatabaseName: !Ref DBName
+      MasterUsername: !Ref DBUsername
+      MasterUserPassword: !Ref DBPassword
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      VpcSecurityGroupIds:
+        - !GetAtt DBSecurityGroup.GroupId
+      DBClusterParameterGroupName: !Ref DBClusterParameterGroup
+      Port: !Ref DBPort
+      BackupRetentionPeriod: 7
+      ServerlessV2ScalingConfiguration:
+        MinCapacity: !Ref DBMinCapacity
+        MaxCapacity: !Ref DBMaxCapacity
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-db-cluster
+
+  # Aurora DB Instance
+  DBInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBClusterIdentifier: !Ref DBCluster
+      Engine: aurora-postgresql
+      DBInstanceClass: db.serverless
+      PubliclyAccessible: true
+      DBParameterGroupName: default.aurora-postgresql14
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-db-instance
+
   LambdaExecutionRole:
     Type: AWS::IAM::Role
     Properties:
@@ -77,6 +183,7 @@ Resources:
     Type: AWS::Lambda::Function
     DependsOn:
       - LambdaExecutionRole
+      - DBInstance
     Properties:
       FunctionName: !Ref "LambdaName"
       Description: LambdaFunction for test website
@@ -88,6 +195,20 @@ Resources:
       MemorySize: 256
       Timeout: 100
       Role: !GetAtt "LambdaExecutionRole.Arn"
+      VpcConfig:
+        SecurityGroupIds:
+          - !GetAtt LambdaSecurityGroup.GroupId
+        SubnetIds:
+          - !Ref PublicSubnetOne
+          - !Ref PublicSubnetTwo
+      Environment:
+        Variables:
+          DB_HOST: !GetAtt DBCluster.Endpoint.Address
+          DB_PORT: !Ref DBPort
+          DB_NAME: !Ref DBName
+          DB_USER: !Ref DBUsername
+          DB_PASSWORD: !Ref DBPassword
+          NODE_ENV: production
 
   ApiGateway:
     Type: AWS::ApiGateway::RestApi

@@ -11,10 +11,13 @@
   },
   "dependencies": {
     "nuxt": "^3.15.4",
+    "pg": "^8.13.3",
+    "typeorm": "^0.3.21",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
+    "@types/pg": "^8.11.11",
     "nuxt-server-fn": "^0.4.1"
   }
 }

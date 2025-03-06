@@ -97,6 +97,9 @@ jobs:
               LambdaRoleArnName=LambdaRole-TestWeb \
               LambdaFunctionArnName=LambdaArn-TestWeb \
               LambdaRoleName=test-website-lambda-role \
+              VpcId=${{ steps.vpc.outputs.vpc-id }} \
+              PublicSubnetOne=${{ steps.vpc.outputs.subnet-one }} \
+              PublicSubnetTwo=${{ steps.vpc.outputs.subnet-two }} \
               DBName=${{ secrets.DB_NAME }} \
               DBUsername=${{ secrets.DB_USERNAME }} \
               DBPassword=${{ secrets.DB_PASSWORD }} \
