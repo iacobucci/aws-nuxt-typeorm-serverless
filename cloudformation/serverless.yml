@@ -21,10 +21,6 @@ Parameters:
   LambdaFunctionArnName:
     Type: String
     Description: Name of the lambda function ARN
-  ApiGatewayStageName:
-    Type: String
-    Description: ApiGateway stage name
-    Default: "prod"
   ApiGatewayName:
     Type: String
     Description: ApiGateway name
@@ -130,7 +126,39 @@ Resources:
       - ApiGatewayResourceProxyMethod
     Properties:
       RestApiId: !Ref ApiGateway
-      StageName: !Ref ApiGatewayStageName
+      StageName: "prod"
+
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Origins:
+          - Id: ApiGatewayOrigin
+            DomainName: !Sub "${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com"
+            OriginPath: "/prod" # Include lo stage nel path di origine
+            CustomOriginConfig:
+              HTTPSPort: 443
+              OriginProtocolPolicy: https-only
+        DefaultCacheBehavior:
+          TargetOriginId: ApiGatewayOrigin
+          ViewerProtocolPolicy: redirect-to-https
+          ForwardedValues:
+            QueryString: true
+            Headers:
+              - Accept
+              - Authorization
+              - Referer
+            Cookies:
+              Forward: all
+          AllowedMethods:
+            - DELETE
+            - GET
+            - HEAD
+            - OPTIONS
+            - PATCH
+            - POST
+            - PUT
 
 Outputs:
   LambdaRoleARN:
@@ -142,4 +170,8 @@ Outputs:
     Export:
       Name: !Ref "LambdaRoleArnName"
   ApiGatewayInvokeURL:
-    Value: !Sub https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${ApiGatewayStageName}
+    Value: !Sub https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com
+
+  CloudFrontURL:
+    Description: "CloudFront Distribution Domain Name"
+    Value: !Sub "https://${CloudFrontDistribution.DomainName}"
