@@ -75,19 +75,19 @@ Resources:
           FromPort: !Ref DBPort
           ToPort: !Ref DBPort
           SourceSecurityGroupId: !Ref LambdaSecurityGroup
-        # - IpProtocol: tcp
-        #   FromPort: !Ref "DBPort"
-        #   ToPort: !Ref "DBPort"
-        #   CidrIp: 0.0.0.0/0 # ⚠️ Accessibile da internet per debug
+        - IpProtocol: tcp
+          FromPort: !Ref "DBPort"
+          ToPort: !Ref "DBPort"
+          CidrIp: 0.0.0.0/0 # ⚠️ Accessibile da internet per debug
       SecurityGroupEgress:
         - IpProtocol: tcp
           FromPort: !Ref "DBPort"
           ToPort: !Ref "DBPort"
           DestinationSecurityGroupId: !Ref LambdaSecurityGroup
-        # - IpProtocol: tcp
-        #   FromPort: !Ref "DBPort"
-        #   ToPort: !Ref "DBPort"
-        #   CidrIp: 0.0.0.0/0 # ⚠️
+        - IpProtocol: tcp
+          FromPort: !Ref "DBPort"
+          ToPort: !Ref "DBPort"
+          CidrIp: 0.0.0.0/0 # ⚠️
       Tags:
         - Key: Name
           Value: !Sub ${AWS::StackName}-db-sg
@@ -350,3 +350,11 @@ Outputs:
   CloudFrontURL:
     Description: "CloudFront Distribution Domain Name"
     Value: !Sub "https://${CloudFrontDistribution.DomainName}"
+
+  DatabaseEndpoint:
+    Description: The connection endpoint for the RDS instance
+    Value: !GetAtt DBInstance.Endpoint.Address
+
+  DatabaseEndpoint2:
+    Description: The connection endpoint for the RDS instance
+    Value: !GetAtt DBInstance.Endpoint.Address
