@@ -74,7 +74,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: !Ref DBPort
           ToPort: !Ref DBPort
-          SourceSecurityGroupId: !Ref LambdaSecurityGroup
+          SourceSecurityGroupId: !GetAtt LambdaSecurityGroup.GroupId
         - IpProtocol: tcp
           FromPort: !Ref "DBPort"
           ToPort: !Ref "DBPort"
@@ -83,7 +83,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: !Ref "DBPort"
           ToPort: !Ref "DBPort"
-          DestinationSecurityGroupId: !Ref LambdaSecurityGroup
+          DestinationSecurityGroupId: !GetAtt LambdaSecurityGroup.GroupId
         - IpProtocol: tcp
           FromPort: !Ref "DBPort"
           ToPort: !Ref "DBPort"
@@ -100,10 +100,22 @@ Resources:
       VpcId: !Ref VpcId
       SecurityGroupEgress:
         - IpProtocol: -1
-          CidrIp: 0.0.0.0/0
+          CidrIp: 0.0.0.0/0 # Permette tutto il traffico in uscita
       Tags:
         - Key: Name
           Value: !Sub ${AWS::StackName}-lambda-sg
+
+  VPCEndpointForLambda:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.lambda"
+      VpcId: !Ref VpcId
+      VpcEndpointType: Interface
+      SubnetIds:
+        - !Ref PublicSubnetOne
+        - !Ref PublicSubnetTwo
+      SecurityGroupIds:
+        - !GetAtt LambdaSecurityGroup.GroupId
 
   # DB Subnet Group
   DBSubnetGroup:
