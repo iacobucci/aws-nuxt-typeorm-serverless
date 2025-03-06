@@ -25,6 +25,34 @@ Parameters:
     Type: String
     Description: ApiGateway name
 
+  # Database parameters
+  DBName:
+    Type: String
+    Description: Database name
+    Default: appdb
+  DBUsername:
+    Type: String
+    Description: Database master username
+    NoEcho: true
+  DBPassword:
+    Type: String
+    Description: Database master password
+    NoEcho: true
+  DBPort:
+    Type: Number
+    Description: Database port
+    Default: 5432
+  DBMinCapacity:
+    Type: Number
+    Description: Minimum database capacity (ACU)
+    Default: 0.5
+    MinValue: 0.5
+  DBMaxCapacity:
+    Type: Number
+    Description: Maximum database capacity (ACU)
+    Default: 2.0
+    MinValue: 0.5
+
 Resources:
   LambdaExecutionRole:
     Type: AWS::IAM::Role
