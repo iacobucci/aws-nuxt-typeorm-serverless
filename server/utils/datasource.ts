@@ -93,7 +93,7 @@ else {
 		subscribers: [],
 		extra: {
 			poolSize: 1, // Riduci il pool in ambiente Lambda
-			connectionTimeoutMillis: 1500
+			connectionTimeoutMillis: 150000
 		}
 	}
 }
