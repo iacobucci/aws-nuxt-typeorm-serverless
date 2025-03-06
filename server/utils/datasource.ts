@@ -86,7 +86,7 @@ else {
 		username: process.env.DB_USERNAME,
 		password: process.env.DB_PASSWORD,
 		ssl: { rejectUnauthorized: false },
-		synchronize: true,
+		synchronize: false,
 		logging: true,
 		entities,
 		migrations: [],
