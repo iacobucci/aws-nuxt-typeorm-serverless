@@ -120,7 +120,7 @@ Resources:
         - IpProtocol: udp
           FromPort: 53
           ToPort: 53
- 	        CidrIp: 0.0.0.0/0  # Per DNS
+          CidrIp: 0.0.0.0/0  # Per DNS
       Tags:
         - Key: Name
           Value: !Sub ${AWS::StackName}-lambda-sg
@@ -297,10 +297,6 @@ Outputs:
     Value: !Sub "https://${CloudFrontDistribution.DomainName}"
 
   DatabaseEndpoint:
-    Description: The connection endpoint for the RDS instance
-    Value: !GetAtt DBInstance.Endpoint.Address
-
-  DatabaseEndpoint2:
     Description: The connection endpoint for the RDS instance
     Value: !GetAtt DBInstance.Endpoint.Address
 
