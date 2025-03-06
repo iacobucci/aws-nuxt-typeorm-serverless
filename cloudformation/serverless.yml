@@ -92,31 +92,6 @@ Resources:
         - Key: Name
           Value: !Sub ${AWS::StackName}-db-sg
 
-  # Security Group for Lambda
-  LambdaSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Security group for Lambda function
-      VpcId: !Ref VpcId
-      SecurityGroupEgress:
-        - IpProtocol: -1
-          CidrIp: 0.0.0.0/0 # Permette tutto il traffico in uscita
-      Tags:
-        - Key: Name
-          Value: !Sub ${AWS::StackName}-lambda-sg
-
-  VPCEndpointForLambda:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      ServiceName: !Sub "com.amazonaws.${AWS::Region}.lambda"
-      VpcId: !Ref VpcId
-      VpcEndpointType: Interface
-      SubnetIds:
-        - !Ref PublicSubnetOne
-        - !Ref PublicSubnetTwo
-      SecurityGroupIds:
-        - !GetAtt LambdaSecurityGroup.GroupId
-
   # DB Subnet Group
   DBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
@@ -174,6 +149,31 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${AWS::StackName}-db-instance
+
+  # Security Group for Lambda
+  LambdaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Lambda function
+      VpcId: !Ref VpcId
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0 # Permette tutto il traffico in uscita
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-lambda-sg
+
+  VPCEndpointForLambda:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub "com.amazonaws.${AWS::Region}.lambda"
+      VpcId: !Ref VpcId
+      VpcEndpointType: Interface
+      SubnetIds:
+        - !Ref PublicSubnetOne
+        - !Ref PublicSubnetTwo
+      SecurityGroupIds:
+        - !GetAtt LambdaSecurityGroup.GroupId
 
   LambdaExecutionRole:
     Type: AWS::IAM::Role
