@@ -92,8 +92,16 @@ else {
 		migrations: [],
 		subscribers: [],
 		extra: {
-			poolSize: 1, // Riduci il pool in ambiente Lambda
-			connectionTimeoutMillis: 150000
+			// Aumenta il pool size se hai un numero prevedibile di esecuzioni Lambda concorrenti
+			poolSize: 5,
+			// Riduci il timeout di connessione
+			connectionTimeoutMillis: 30000,
+			// Aggiungi queste opzioni
+			max: 5, // massimo numero di connessioni
+			idleTimeoutMillis: 10000, // chiudi le connessioni inattive dopo 10 secondi
+			// Per ambienti serverless è utile
+			keepAlive: true,
+			keepAliveInitialDelayMillis: 10000
 		}
 	}
 }
