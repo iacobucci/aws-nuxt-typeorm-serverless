@@ -84,3 +84,28 @@ jobs:
       - name: Upload to S3
         run: aws s3 cp app.zip s3://nuxt-typeorm-serverless-bucket/app.zip
 
+      - name: Deploy CloudFormation stack
+        run: |
+          aws cloudformation deploy \
+            --stack-name test-lambda-stack \
+            --template-file cloudformation/serverless.yml \
+            --parameter-overrides \
+              ApiGatewayName=test-web-api \
+              LambdaName=test-website-lambda \
+              LambdaBucket=nuxt-typeorm-serverless-bucket \
+              LambdaUrl=app.zip \
+              LambdaRoleArnName=LambdaRole-TestWeb \
+              LambdaFunctionArnName=LambdaArn-TestWeb \
+              LambdaRoleName=test-website-lambda-role \
+              DBName=${{ secrets.DB_NAME }} \
+              DBUsername=${{ secrets.DB_USERNAME }} \
+              DBPassword=${{ secrets.DB_PASSWORD }} \
+              DBPort=${{ secrets.DB_PORT }} \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
+
+      - name: Update Lambda function code
+        run: |
+          aws lambda update-function-code \
+            --function-name test-website-lambda \
+            --s3-bucket nuxt-typeorm-serverless-bucket \
+            --s3-key app.zip
