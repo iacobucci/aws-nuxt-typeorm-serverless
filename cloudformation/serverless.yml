@@ -229,7 +229,7 @@ Resources:
           - !Ref PublicSubnetTwo
       Environment:
         Variables:
-          DB_HOST: !GetAtt DBCluster.Endpoint.Address
+          DB_HOSTNAME: !GetAtt DBCluster.Endpoint.Address
           DB_PORT: !Ref DBPort
           DB_NAME: !Ref DBName
           DB_USERNAME: !Ref DBUsername
