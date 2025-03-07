@@ -92,10 +92,10 @@ else {
 		migrations: [],
 		subscribers: [],
 		extra: {
-			max: 1,
-			min: 0,
+			max: 1000,
+			min: 10,
 			connectionTimeoutMillis: 30000,
-			keepAlive: false, // Important!
+			keepAlive: true, // Performance.
 			keepAliveInitialDelayMillis: 5000,
 			query_timeout: 10000,
 		},
