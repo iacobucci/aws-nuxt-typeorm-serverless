@@ -105,18 +105,6 @@ else {
 
 export const AppDataSource = new DataSource(options);
 
-export async function initialize() {
-	try {
-		if (!AppDataSource.isInitialized) {
-			await AppDataSource.initialize()
-			console.log('✅ Typeorm inizializzato', { type: AppDataSource.options.type, database: AppDataSource.options.database })
-		}
-	} catch (error) {
-		console.error('❌ Errore inizializzazione Typeorm', error)
-		throw error
-	}
-}
-
 export async function ensureDataSource() {
 	try {
 		if (!AppDataSource.isInitialized) {
