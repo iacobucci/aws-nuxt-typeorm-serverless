@@ -188,6 +188,10 @@ Resources:
   
   RDSProxyTargetGroup:
     Type: AWS::RDS::DBProxyTargetGroup
+    DependsOn: 
+      - RDSProxy
+      - DBCluster
+      - DBInstance
     Properties:
       DBProxyName: !Ref RDSProxy
       TargetGroupName: default
