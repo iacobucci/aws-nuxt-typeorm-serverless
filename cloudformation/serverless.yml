@@ -223,7 +223,6 @@ Resources:
         MaxIdleConnectionsPercent: 50
         ConnectionBorrowTimeout: 120
 
-
   VPCEndpointForLambda:
     Type: AWS::EC2::VPCEndpoint
     Properties:

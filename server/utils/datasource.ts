@@ -111,7 +111,7 @@ else {
 			keepAlive: true, // Important!
 			keepAliveInitialDelayMillis: 5000,
 			// Add these for better error handling
-			statement_timeout: 10000, // 10s statement timeout
+			// statement_timeout: 10000, // 10s statement timeout
 			query_timeout: 10000,
 			idle_in_transaction_session_timeout: 10000
 		},
@@ -122,56 +122,56 @@ else {
 
 export const AppDataSource = new DataSource(options);
 
-// export async function initialize() {
-// 	try {
-// 		if (!AppDataSource.isInitialized) {
-// 			await AppDataSource.initialize()
-// 			console.log('✅ Typeorm inizializzato', { type: AppDataSource.options.type, database: AppDataSource.options.database })
-// 		}
-// 	} catch (error) {
-// 		console.error('❌ Errore inizializzazione Typeorm', error)
-// 		throw error
-// 	}
-// }
-
-let isInitializing = false;
-
 export async function initialize() {
 	try {
-		// Se è già inizializzato, restituisci subito
-		if (AppDataSource.isInitialized) {
-			return AppDataSource;
+		if (!AppDataSource.isInitialized) {
+			await AppDataSource.initialize()
+			console.log('✅ Typeorm inizializzato', { type: AppDataSource.options.type, database: AppDataSource.options.database })
 		}
-
-		// Se sta già inizializzando, attendi
-		if (isInitializing) {
-			console.log('⏳ Attesa inizializzazione in corso...');
-			// Attendi che l'inizializzazione in corso termini
-			while (isInitializing && !AppDataSource.isInitialized) {
-				await new Promise(resolve => setTimeout(resolve, 100));
-			}
-			return AppDataSource;
-		}
-
-		// Inizia il processo di inizializzazione
-		isInitializing = true;
-		console.log('🔄 Avvio inizializzazione Typeorm...');
-
-		await AppDataSource.initialize();
-
-		console.log('✅ Typeorm inizializzato', {
-			type: AppDataSource.options.type,
-			database: AppDataSource.options.database
-		});
-
-		isInitializing = false;
-		return AppDataSource;
 	} catch (error) {
-		isInitializing = false;
-		console.error('❌ Errore inizializzazione Typeorm', error);
-		throw error;
+		console.error('❌ Errore inizializzazione Typeorm', error)
+		throw error
 	}
 }
+
+// let isInitializing = false;
+
+// export async function initialize() {
+// 	try {
+// 		// Se è già inizializzato, restituisci subito
+// 		if (AppDataSource.isInitialized) {
+// 			return AppDataSource;
+// 		}
+
+// 		// Se sta già inizializzando, attendi
+// 		if (isInitializing) {
+// 			console.log('⏳ Attesa inizializzazione in corso...');
+// 			// Attendi che l'inizializzazione in corso termini
+// 			while (isInitializing && !AppDataSource.isInitialized) {
+// 				await new Promise(resolve => setTimeout(resolve, 100));
+// 			}
+// 			return AppDataSource;
+// 		}
+
+// 		// Inizia il processo di inizializzazione
+// 		isInitializing = true;
+// 		console.log('🔄 Avvio inizializzazione Typeorm...');
+
+// 		await AppDataSource.initialize();
+
+// 		console.log('✅ Typeorm inizializzato', {
+// 			type: AppDataSource.options.type,
+// 			database: AppDataSource.options.database
+// 		});
+
+// 		isInitializing = false;
+// 		return AppDataSource;
+// 	} catch (error) {
+// 		isInitializing = false;
+// 		console.error('❌ Errore inizializzazione Typeorm', error);
+// 		throw error;
+// 	}
+// }
 
 // // Global variable maintained across Lambda invocations
 // let dataSourceInitPromise: Promise<DataSource> | null = null;
