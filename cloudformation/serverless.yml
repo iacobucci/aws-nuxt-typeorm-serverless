@@ -1,7 +1,8 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
-Description: >
-  Test website SSR with AWS Lambda
+
+Description: Deploy a SSR website with AWS Lambda connecting to Aurora Serverless under a Proxy for connection pooling
+
 Parameters:
   # parametri provenienti da github actions, presi dalla vpc di default
   VpcId:
@@ -75,19 +76,19 @@ Resources:
           FromPort: !Ref DBPort
           ToPort: !Ref DBPort
           SourceSecurityGroupId: !GetAtt LambdaSecurityGroup.GroupId
-        - IpProtocol: tcp
-          FromPort: !Ref "DBPort"
-          ToPort: !Ref "DBPort"
-          CidrIp: 0.0.0.0/0 # ⚠️ Accessibile da internet per debug
+        # - IpProtocol: tcp
+        #   FromPort: !Ref "DBPort"
+        #   ToPort: !Ref "DBPort"
+        #   CidrIp: 0.0.0.0/0 # ⚠️ Accessibile da internet per debug
       SecurityGroupEgress:
         - IpProtocol: tcp
           FromPort: !Ref "DBPort"
           ToPort: !Ref "DBPort"
           DestinationSecurityGroupId: !GetAtt LambdaSecurityGroup.GroupId
-        - IpProtocol: tcp
-          FromPort: !Ref "DBPort"
-          ToPort: !Ref "DBPort"
-          CidrIp: 0.0.0.0/0 # ⚠️
+        # - IpProtocol: tcp
+        #   FromPort: !Ref "DBPort"
+        #   ToPort: !Ref "DBPort"
+        #   CidrIp: 0.0.0.0/0 # ⚠️
       Tags:
         - Key: Name
           Value: !Sub ${AWS::StackName}-db-sg
@@ -194,7 +195,7 @@ Resources:
         - !Ref PublicSubnetTwo
       VpcSecurityGroupIds:
         - !GetAtt DBSecurityGroup.GroupId
-      RequireTLS: false
+      RequireTLS: true
       IdleClientTimeout: 1800
   
   # Target group for the proxy
@@ -281,7 +282,7 @@ Resources:
         S3Bucket: !Ref "LambdaBucket"
         S3Key: !Ref "LambdaUrl"
       Handler: .output/server/index.handler
-      MemorySize: 512
+      MemorySize: 256
       Timeout: 180
       Role: !GetAtt "LambdaExecutionRole.Arn"
       VpcConfig:

@@ -85,7 +85,7 @@ else {
 		port: parseInt(process.env.DB_PORT || "5432"),
 		username: process.env.DB_USERNAME,
 		password: process.env.DB_PASSWORD,
-		ssl: false,
+		ssl: { rejectUnauthorized: false },
 		synchronize: false,
 		logging: true,
 		entities,
@@ -122,82 +122,3 @@ export async function ensureDataSource() {
 		await AppDataSource.initialize(); // Re-inizializza
 	}
 }
-
-// let isInitializing = false;
-
-// export async function initialize() {
-// 	try {
-// 		// Se è già inizializzato, restituisci subito
-// 		if (AppDataSource.isInitialized) {
-// 			return AppDataSource;
-// 		}
-
-// 		// Se sta già inizializzando, attendi
-// 		if (isInitializing) {
-// 			console.log('⏳ Attesa inizializzazione in corso...');
-// 			// Attendi che l'inizializzazione in corso termini
-// 			while (isInitializing && !AppDataSource.isInitialized) {
-// 				await new Promise(resolve => setTimeout(resolve, 100));
-// 			}
-// 			return AppDataSource;
-// 		}
-
-// 		// Inizia il processo di inizializzazione
-// 		isInitializing = true;
-// 		console.log('🔄 Avvio inizializzazione Typeorm...');
-
-// 		await AppDataSource.initialize();
-
-// 		console.log('✅ Typeorm inizializzato', {
-// 			type: AppDataSource.options.type,
-// 			database: AppDataSource.options.database
-// 		});
-
-// 		isInitializing = false;
-// 		return AppDataSource;
-// 	} catch (error) {
-// 		isInitializing = false;
-// 		console.error('❌ Errore inizializzazione Typeorm', error);
-// 		throw error;
-// 	}
-// }
-
-// // Global variable maintained across Lambda invocations
-// let dataSourceInitPromise: Promise<DataSource> | null = null;
-
-// export async function initialize() {
-// 	// If already initialized, return immediately
-// 	if (AppDataSource.isInitialized) {
-// 		return AppDataSource;
-// 	}
-
-// 	// If initialization is in progress, wait for it
-// 	if (dataSourceInitPromise) {
-// 		try {
-// 			await dataSourceInitPromise;
-// 			return AppDataSource;
-// 		} catch (error) {
-// 			// If previous initialization failed, we'll retry below
-// 			console.log('Previous initialization failed, retrying...');
-// 			dataSourceInitPromise = null;
-// 		}
-// 	}
-
-// 	// Start initialization
-// 	console.log('🔄 Starting TypeORM initialization...');
-// 	dataSourceInitPromise = AppDataSource.initialize()
-// 		.then(() => {
-// 			console.log('✅ TypeORM initialized', {
-// 				type: AppDataSource.options.type,
-// 				database: AppDataSource.options.database
-// 			});
-// 			return AppDataSource;
-// 		})
-// 		.catch(error => {
-// 			console.error('❌ TypeORM initialization error', error);
-// 			dataSourceInitPromise = null;
-// 			throw error;
-// 		});
-
-// 	return dataSourceInitPromise;
-// }
