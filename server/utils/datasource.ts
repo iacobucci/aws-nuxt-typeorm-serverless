@@ -95,7 +95,7 @@ else {
 			max: 1000, // pool size ottimizzata per Lambda
 			min: 2,
 			connectionTimeoutMillis: 30000,
-			keepAlive: true, // Important!
+			keepAlive: false, // Important!
 			keepAliveInitialDelayMillis: 5000,
 			query_timeout: 10000,
 		},
