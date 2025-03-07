@@ -213,6 +213,7 @@ Resources:
       - LambdaExecutionRole
       - DBInstance
     Properties:
+      ReservedConcurrentExecutions: 5  # Limita a 5 esecuzioni simultanee
       FunctionName: !Ref "LambdaName"
       Description: LambdaFunction for test website
       Runtime: "nodejs18.x"
@@ -220,8 +221,8 @@ Resources:
         S3Bucket: !Ref "LambdaBucket"
         S3Key: !Ref "LambdaUrl"
       Handler: .output/server/index.handler
-      MemorySize: 256
-      Timeout: 100
+      MemorySize: 512
+      Timeout: 180
       Role: !GetAtt "LambdaExecutionRole.Arn"
       VpcConfig:
         SecurityGroupIds:
