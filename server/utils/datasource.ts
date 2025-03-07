@@ -123,38 +123,38 @@ export const AppDataSource = new DataSource(options);
 let isInitializing = false;
 
 export async function initialize() {
-  try {
-    // Se è già inizializzato, restituisci subito
-    if (AppDataSource.isInitialized) {
-      return AppDataSource;
-    }
-    
-    // Se sta già inizializzando, attendi
-    if (isInitializing) {
-      console.log('⏳ Attesa inizializzazione in corso...');
-      // Attendi che l'inizializzazione in corso termini
-      while (isInitializing && !AppDataSource.isInitialized) {
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-      return AppDataSource;
-    }
-    
-    // Inizia il processo di inizializzazione
-    isInitializing = true;
-    console.log('🔄 Avvio inizializzazione Typeorm...');
-    
-    await AppDataSource.initialize();
-    
-    console.log('✅ Typeorm inizializzato', { 
-      type: AppDataSource.options.type, 
-      database: AppDataSource.options.database 
-    });
-    
-    isInitializing = false;
-    return AppDataSource;
-  } catch (error) {
-    isInitializing = false;
-    console.error('❌ Errore inizializzazione Typeorm', error);
-    throw error;
-  }
+	try {
+		// Se è già inizializzato, restituisci subito
+		if (AppDataSource.isInitialized) {
+			return AppDataSource;
+		}
+
+		// Se sta già inizializzando, attendi
+		if (isInitializing) {
+			console.log('⏳ Attesa inizializzazione in corso...');
+			// Attendi che l'inizializzazione in corso termini
+			while (isInitializing && !AppDataSource.isInitialized) {
+				await new Promise(resolve => setTimeout(resolve, 100));
+			}
+			return AppDataSource;
+		}
+
+		// Inizia il processo di inizializzazione
+		isInitializing = true;
+		console.log('🔄 Avvio inizializzazione Typeorm...');
+
+		await AppDataSource.initialize();
+
+		console.log('✅ Typeorm inizializzato', {
+			type: AppDataSource.options.type,
+			database: AppDataSource.options.database
+		});
+
+		isInitializing = false;
+		return AppDataSource;
+	} catch (error) {
+		isInitializing = false;
+		console.error('❌ Errore inizializzazione Typeorm', error);
+		throw error;
+	}
 }

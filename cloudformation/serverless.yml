@@ -150,58 +150,6 @@ Resources:
         - Key: Name
           Value: !Sub ${AWS::StackName}-db-instance
 
-  RDSProxy:
-    Type: AWS::RDS::DBProxy
-    Properties:
-      DBProxyName: !Sub "${AWS::StackName}-proxy"
-      EngineFamily: POSTGRESQL
-      RoleArn: !GetAtt RDSProxyRole.Arn
-      Auth:
-        - AuthScheme: SECRETS
-          SecretArn: !Ref DBCredentialsSecret
-          IAMAuth: DISABLED
-      VpcSubnetIds:
-        - !Ref PublicSubnetOne
-        - !Ref PublicSubnetTwo
-      VpcSecurityGroupIds:
-        - !GetAtt DBSecurityGroup.GroupId
-  
-  RDSProxyRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: rds.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole
-  
-  DBCredentialsSecret:
-    Type: AWS::SecretsManager::Secret
-    Properties:
-      Name: !Sub "${AWS::StackName}/db-credentials"
-      Description: "Credenziali del database Aurora"
-      SecretString: !Sub '{"username":"${DBUsername}","password":"${DBPassword}"}'
-  
-  RDSProxyTargetGroup:
-    Type: AWS::RDS::DBProxyTargetGroup
-    DependsOn: 
-      - RDSProxy
-      - DBCluster
-      - DBInstance
-    Properties:
-      DBProxyName: !Ref RDSProxy
-      TargetGroupName: default
-      DBClusterIdentifiers:
-        - !Ref DBCluster
-      ConnectionPoolConfigurationInfo:
-        MaxConnectionsPercent: 100
-        MaxIdleConnectionsPercent: 50
-        ConnectionBorrowTimeout: 120
-
   # Security Group for Lambda
   LambdaSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -283,8 +231,7 @@ Resources:
           - !Ref PublicSubnetTwo
       Environment:
         Variables:
-          # DB_HOSTNAME: !GetAtt DBCluster.Endpoint.Address
-          DB_HOSTNAME: !GetAtt RDSProxy.Endpoint  # Usa l'endpoint del proxy invece del cluster
+          DB_HOSTNAME: !GetAtt DBCluster.Endpoint.Address
           DB_PORT: !Ref DBPort
           DB_NAME: !Ref DBName
           DB_USERNAME: !Ref DBUsername
