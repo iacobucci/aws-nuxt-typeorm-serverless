@@ -113,7 +113,7 @@ else {
 			// Add these for better error handling
 			// statement_timeout: 10000, // 10s statement timeout
 			query_timeout: 10000,
-			idle_in_transaction_session_timeout: 10000
+			// idle_in_transaction_session_timeout: 10000
 		},
 		// Add this to handle reconnection
 		connectTimeoutMS: 10000,
