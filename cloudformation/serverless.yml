@@ -163,6 +163,67 @@ Resources:
         - Key: Name
           Value: !Sub ${AWS::StackName}-lambda-sg
 
+  DatabaseSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub "${AWS::StackName}-db-credentials"
+      Description: "Aurora database credentials"
+      SecretString: !Sub '{"username": "${DBUsername}", "password": "${DBPassword}"}'
+  
+  # Role for RDS Proxy
+  RDSProxyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: rds.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: SecretAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource: !Ref DatabaseSecret
+  
+  # The RDS Proxy - simplified version
+  RDSProxy:
+    Type: AWS::RDS::DBProxy
+    Properties:
+      DBProxyName: !Sub "${AWS::StackName}-proxy"
+      EngineFamily: POSTGRESQL
+      RoleArn: !GetAtt RDSProxyRole.Arn
+      Auth:
+        - AuthScheme: SECRETS
+          SecretArn: !Ref DatabaseSecret
+          IAMAuth: DISABLED
+      VpcSubnetIds:
+        - !Ref PublicSubnetOne
+        - !Ref PublicSubnetTwo
+      VpcSecurityGroupIds:
+        - !GetAtt DBSecurityGroup.GroupId
+      RequireTLS: false
+      IdleClientTimeout: 1800
+  
+  # Target group for the proxy
+  RDSProxyTargetGroup:
+    Type: AWS::RDS::DBProxyTargetGroup
+    Properties:
+      DBProxyName: !Ref RDSProxy
+      TargetGroupName: default
+      DBClusterIdentifiers:
+        - !Ref DBCluster
+      ConnectionPoolConfigurationInfo:
+        MaxConnectionsPercent: 100
+        MaxIdleConnectionsPercent: 50
+        ConnectionBorrowTimeout: 120
+
+
   VPCEndpointForLambda:
     Type: AWS::EC2::VPCEndpoint
     Properties:
@@ -232,7 +293,8 @@ Resources:
           - !Ref PublicSubnetTwo
       Environment:
         Variables:
-          DB_HOSTNAME: !GetAtt DBCluster.Endpoint.Address
+          # DB_HOSTNAME: !GetAtt DBCluster.Endpoint.Address
+          DB_HOSTNAME: !GetAtt RDSProxy.Endpoint
           DB_PORT: !Ref DBPort
           DB_NAME: !Ref DBName
           DB_USERNAME: !Ref DBUsername
@@ -280,3 +342,7 @@ Outputs:
   LambdaFunctionUrl:
     Description: "URL pubblico per la Lambda function"
     Value: !GetAtt LambdaFunctionUrl.FunctionUrl
+
+  ProxyEndpoint:
+    Description: "RDS Proxy Endpoint"
+    Value: !GetAtt RDSProxy.Endpoint
