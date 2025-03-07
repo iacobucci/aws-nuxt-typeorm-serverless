@@ -91,33 +91,15 @@ else {
 		entities,
 		migrations: [],
 		subscribers: [],
-		// extra: {
-		// 	// Aumenta il pool size se hai un numero prevedibile di esecuzioni Lambda concorrenti
-		// 	poolSize: 5,
-		// 	// Riduci il timeout di connessione
-		// 	connectionTimeoutMillis: 30000,
-		// 	// Aggiungi queste opzioni
-		// 	max: 5, // massimo numero di connessioni
-		// 	idleTimeoutMillis: 10000, // chiudi le connessioni inattive dopo 10 secondi
-		// 	// Per ambienti serverless è utile
-		// 	keepAlive: true,
-		// 	keepAliveInitialDelayMillis: 10000
-		// }
-		// Better settings for serverless
 		extra: {
-			max: 10,
+			max: 1000, // pool size ottimizzata per Lambda
 			min: 2,
-			connectionTimeoutMillis: 10000, // Lower timeout
-			// For Aurora Serverless specifically
+			connectionTimeoutMillis: 30000,
 			keepAlive: true, // Important!
 			keepAliveInitialDelayMillis: 5000,
-			// Add these for better error handling
-			// statement_timeout: 10000, // 10s statement timeout
 			query_timeout: 10000,
-			// idle_in_transaction_session_timeout: 10000
 		},
-		// Add this to handle reconnection
-		connectTimeoutMS: 10000,
+		connectTimeoutMS: 30000,
 	}
 }
 
