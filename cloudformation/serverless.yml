@@ -150,19 +150,6 @@ Resources:
         - Key: Name
           Value: !Sub ${AWS::StackName}-db-instance
 
-  # Security Group for Lambda
-  LambdaSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Security group for Lambda function
-      VpcId: !Ref VpcId
-      SecurityGroupEgress:
-        - IpProtocol: -1
-          CidrIp: 0.0.0.0/0 # Permette tutto il traffico in uscita
-      Tags:
-        - Key: Name
-          Value: !Sub ${AWS::StackName}-lambda-sg
-
   DatabaseSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
@@ -234,6 +221,19 @@ Resources:
         - !Ref PublicSubnetTwo
       SecurityGroupIds:
         - !GetAtt LambdaSecurityGroup.GroupId
+
+  # Security Group for Lambda
+  LambdaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Lambda function
+      VpcId: !Ref VpcId
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0 # Permette tutto il traffico in uscita
+      Tags:
+        - Key: Name
+          Value: !Sub ${AWS::StackName}-lambda-sg
 
   LambdaExecutionRole:
     Type: AWS::IAM::Role

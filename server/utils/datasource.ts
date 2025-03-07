@@ -105,7 +105,8 @@ else {
 		// }
 		// Better settings for serverless
 		extra: {
-			max: 1, // Keep pool minimal for Lambda
+			max: 10,
+			min: 2,
 			connectionTimeoutMillis: 10000, // Lower timeout
 			// For Aurora Serverless specifically
 			keepAlive: true, // Important!
