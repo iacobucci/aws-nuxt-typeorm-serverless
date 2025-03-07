@@ -92,8 +92,8 @@ else {
 		migrations: [],
 		subscribers: [],
 		extra: {
-			max: 1000, // pool size ottimizzata per Lambda
-			min: 2,
+			max: 1,
+			min: 0,
 			connectionTimeoutMillis: 30000,
 			keepAlive: false, // Important!
 			keepAliveInitialDelayMillis: 5000,
@@ -114,6 +114,24 @@ export async function initialize() {
 	} catch (error) {
 		console.error('❌ Errore inizializzazione Typeorm', error)
 		throw error
+	}
+}
+
+export async function ensureDataSource() {
+	try {
+		if (!AppDataSource.isInitialized) {
+			await AppDataSource.initialize();
+			console.log('✅ Typeorm inizializzato');
+		} else {
+			// Verifica se la connessione è ancora valida
+			await AppDataSource.query('SELECT 1');
+		}
+	} catch (error) {
+		console.error('❌ Errore durante la verifica o inizializzazione di Typeorm', error);
+		if (AppDataSource.isInitialized) {
+			await AppDataSource.destroy(); // Chiudi il DataSource esistente
+		}
+		await AppDataSource.initialize(); // Re-inizializza
 	}
 }
 
