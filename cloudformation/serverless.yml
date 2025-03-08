@@ -76,24 +76,23 @@ Resources:
           FromPort: !Ref DBPort
           ToPort: !Ref DBPort
           SourceSecurityGroupId: !GetAtt LambdaSecurityGroup.GroupId
-        # - IpProtocol: tcp
-        #   FromPort: !Ref "DBPort"
-        #   ToPort: !Ref "DBPort"
-        #   CidrIp: 0.0.0.0/0 # ⚠️ Accessibile da internet per debug
+        - IpProtocol: tcp
+          FromPort: !Ref "DBPort"
+          ToPort: !Ref "DBPort"
+          CidrIp: 0.0.0.0/0 # ⚠️ Accessibile da internet per debug
       SecurityGroupEgress:
         - IpProtocol: tcp
           FromPort: !Ref "DBPort"
           ToPort: !Ref "DBPort"
           DestinationSecurityGroupId: !GetAtt LambdaSecurityGroup.GroupId
-        # - IpProtocol: tcp
-        #   FromPort: !Ref "DBPort"
-        #   ToPort: !Ref "DBPort"
-        #   CidrIp: 0.0.0.0/0 # ⚠️
+        - IpProtocol: tcp
+          FromPort: !Ref "DBPort"
+          ToPort: !Ref "DBPort"
+          CidrIp: 0.0.0.0/0 # ⚠️
       Tags:
         - Key: Name
           Value: !Sub ${AWS::StackName}-db-sg
 
-  # DB Subnet Group
   DBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
     Properties:
@@ -105,7 +104,6 @@ Resources:
         - Key: Name
           Value: !Sub ${AWS::StackName}-db-subnet-group
 
-  # DB Cluster Parameter Group
   DBClusterParameterGroup:
     Type: AWS::RDS::DBClusterParameterGroup
     Properties:
@@ -116,7 +114,6 @@ Resources:
         log_statement: all
         log_min_duration_statement: "1000"
 
-  # Aurora PostgreSQL Serverless Cluster
   DBCluster:
     Type: AWS::RDS::DBCluster
     Properties:
@@ -138,7 +135,6 @@ Resources:
         - Key: Name
           Value: !Sub ${AWS::StackName}-db-cluster
 
-  # Aurora DB Instance
   DBInstance:
     Type: AWS::RDS::DBInstance
     Properties:
@@ -157,13 +153,12 @@ Resources:
       Name: !Sub "${AWS::StackName}-db-credentials"
       Description: "Aurora database credentials"
       SecretString: !Sub '{"username": "${DBUsername}", "password": "${DBPassword}"}'
-  
-  # Role for RDS Proxy
+
   RDSProxyRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
@@ -172,14 +167,13 @@ Resources:
       Policies:
         - PolicyName: SecretAccess
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
                   - secretsmanager:GetSecretValue
                 Resource: !Ref DatabaseSecret
-  
-  # The RDS Proxy - simplified version
+
   RDSProxy:
     Type: AWS::RDS::DBProxy
     Properties:
@@ -197,8 +191,7 @@ Resources:
         - !GetAtt DBSecurityGroup.GroupId
       RequireTLS: true
       IdleClientTimeout: 1800
-  
-  # Target group for the proxy
+
   RDSProxyTargetGroup:
     Type: AWS::RDS::DBProxyTargetGroup
     Properties:
@@ -223,7 +216,6 @@ Resources:
       SecurityGroupIds:
         - !GetAtt LambdaSecurityGroup.GroupId
 
-  # Security Group for Lambda
   LambdaSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -274,7 +266,8 @@ Resources:
       - LambdaExecutionRole
       - DBInstance
     Properties:
-      # ReservedConcurrentExecutions: 5  # Limita a 5 esecuzioni simultanee
+      # ProvisionedConcurrencyConfig:
+      #   ProvisionedConcurrentExecutions: 1 # Rendi 1 funzione sempre disponibile
       FunctionName: !Ref "LambdaName"
       Description: LambdaFunction for test website
       Runtime: "nodejs18.x"

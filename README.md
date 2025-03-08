@@ -1,75 +1,50 @@
-# Nuxt Minimal Starter
+# Cfn Nuxt Typeorm Lambda and Aurora
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+## Modalità di sviluppo
 
-## Setup
-
-Make sure to install dependencies:
+Avviare il database postgres per lo sviluppo.
 
 ```bash
-# npm
+cd postgres
+docker build -t postgres_dev .
+docker run -d --name postgres_dev -p 5432:5432 postgres_dev
+```
+
+Avviare il server Nuxt.
+
+```bash
 npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
+npx nuxi dev
 ```
 
-## Development Server
+## Creazione dell'infrastruttura AWS
 
-Start the development server on `http://localhost:3000`:
+Avviare la creazione dello stack che effettua la connessione OIDC alla
+repository di github di interesse.
 
-```bash
-# npm
-npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
+```
+export GIHTUB_ORG=iacobucci
+export REPOSITORY_NAME=cfn-nuxt-typeorm-lambda-aurora
+aws cloudformation deploy \
+	--stack-name github-actions-cloudformation-deploy-setup \
+	--template-file cloudformation/setup.yml \
+	--capabilities CAPABILITY_NAMED_IAM \
+	--region eu-central-1 \
+	--parameter-overrides GitHubOrg=$GITHUB_ORG RepositoryName=$REPOSITORY_NAME
 ```
 
-## Production
+Creare una nuova repository github, pubblica o privata.
 
-Build the application for production:
+Impostare i secrets di github actions:
 
-```bash
-# npm
-npm run build
+![secrets](./res/aggiunta-secrets.png)
 
-# pnpm
-pnpm build
+| nome secret    | valore                                                                          |
+| -------------- | ------------------------------------------------------------------------------- |
+| AWS_ACCOUNT_ID | copiare l'output di `aws sts get-caller-identity --query Account --output text` |
+| DB_PORT        | \*\*\*                                                                          |
+| DB_NAME        | \*\*\*                                                                          |
+| DB_USERNAME    | \*\*\*                                                                          |
+| DB_PASSWORD    | \*\*\*                                                                          |
 
-# yarn
-yarn build
-
-# bun
-bun run build
-```
-
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+Fare un push su master.

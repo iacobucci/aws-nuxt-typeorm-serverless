@@ -8,107 +8,107 @@
 # microservices, using a CloudFormation template to deploy the image to an
 # Amazon ECS service.
 
-on:
-  push:
-    branches:
-      - master
-
-name: Deploy
-
-jobs:
-  # Deploy infrastructure resources like ECR repository and load balancer.
-  # This job will run on every code change to the master branch, but will only deploy
-  # changes if the infrastructure CloudFormation template in the repository have changed.
-  setup:
-    name: Setup
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    outputs:
-      env-name: ${{ steps.env-name.outputs.environment }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      # The "environment name" is used as the base for CloudFormation stack names,
-      # and is derived from the GitHub repository name.
-      # For example, the repo 'Octocat/Hello-World' would have the environment name
-      # 'Octocat-Hello-World' and would deploy a stack name 'Octocat-Hello-World-ecr-repo'.
-      - name: Configure environment name
-        id: env-name
-        env:
-          REPO: ${{ github.repository }}
-        run: |
-          ENVIRONMENT=`echo $REPO | tr "/" "-"`
-          echo "Environment name: $ENVIRONMENT"
-          echo "environment=$ENVIRONMENT" >> "$GITHUB_OUTPUT"
-
-      - name: Configure AWS credentials
-        id: creds
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-central-1
-
-      - name: Retrieve default VPC ID and public subnets
-        id: vpc
-        run: |
-          VPC_ID=`aws ec2 describe-vpcs --filters "Name=isDefault, Values=true" --query 'Vpcs[].VpcId' --output text`
-          echo "vpc-id=$VPC_ID" >> "$GITHUB_OUTPUT"
-
-          SUBNET_1=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=$VPC_ID" "Name=default-for-az,Values=true" --query 'Subnets[0].SubnetId' --output text`
-          echo "subnet-one=$SUBNET_1" >> "$GITHUB_OUTPUT"
-
-          SUBNET_2=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=$VPC_ID" "Name=default-for-az,Values=true" --query 'Subnets[1].SubnetId' --output text`
-          echo "subnet-two=$SUBNET_2" >> "$GITHUB_OUTPUT"
-
-      - name: Create S3 bucket if not exists
-        run: |
-          BUCKET_NAME="nuxt-typeorm-serverless-bucket"
-          if ! aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
-            aws s3api create-bucket --bucket "$BUCKET_NAME" --region eu-central-1 --create-bucket-configuration LocationConstraint=eu-central-1
-            aws s3api put-bucket-versioning --bucket "$BUCKET_NAME" --versioning-configuration Status=Enabled
-          fi
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build Nuxt app
-        run: npm run build
-
-      - name: Archive build folder
-        run: zip -r app.zip .output
-
-      - name: Upload to S3
-        run: aws s3 cp app.zip s3://nuxt-typeorm-serverless-bucket/app.zip
-
-      - name: Deploy CloudFormation stack
-        run: |
-          aws cloudformation deploy \
-            --stack-name test-lambda-stack \
-            --template-file cloudformation/serverless.yml \
-            --parameter-overrides \
-              ApiGatewayName=test-web-api \
-              LambdaName=test-website-lambda \
-              LambdaBucket=nuxt-typeorm-serverless-bucket \
-              LambdaUrl=app.zip \
-              LambdaRoleArnName=LambdaRole-TestWeb \
-              LambdaFunctionArnName=LambdaArn-TestWeb \
-              LambdaRoleName=test-website-lambda-role \
-              VpcId=${{ steps.vpc.outputs.vpc-id }} \
-              PublicSubnetOne=${{ steps.vpc.outputs.subnet-one }} \
-              PublicSubnetTwo=${{ steps.vpc.outputs.subnet-two }} \
-              DBName=${{ secrets.DB_NAME }} \
-              DBUsername=${{ secrets.DB_USERNAME }} \
-              DBPassword=${{ secrets.DB_PASSWORD }} \
-              DBPort=${{ secrets.DB_PORT }} \
-            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
-
-      - name: Update Lambda function code
-        run: |
-          aws lambda update-function-code \
-            --function-name test-website-lambda \
-            --s3-bucket nuxt-typeorm-serverless-bucket \
-            --s3-key app.zip
+#on:
+#  push:
+#    branches:
+#      - master
+#
+#name: Deploy
+#
+# jobs:
+#   # Deploy infrastructure resources like ECR repository and load balancer.
+#   # This job will run on every code change to the master branch, but will only deploy
+#   # changes if the infrastructure CloudFormation template in the repository have changed.
+#   setup:
+#     name: Setup
+#     runs-on: ubuntu-latest
+#     permissions:
+#       id-token: write
+#       contents: read
+#     outputs:
+#       env-name: ${{ steps.env-name.outputs.environment }}
+#     steps:
+#       - name: Checkout
+#         uses: actions/checkout@v4
+# 
+#       # The "environment name" is used as the base for CloudFormation stack names,
+#       # and is derived from the GitHub repository name.
+#       # For example, the repo 'Octocat/Hello-World' would have the environment name
+#       # 'Octocat-Hello-World' and would deploy a stack name 'Octocat-Hello-World-ecr-repo'.
+#       - name: Configure environment name
+#         id: env-name
+#         env:
+#           REPO: ${{ github.repository }}
+#         run: |
+#           ENVIRONMENT=`echo $REPO | tr "/" "-"`
+#           echo "Environment name: $ENVIRONMENT"
+#           echo "environment=$ENVIRONMENT" >> "$GITHUB_OUTPUT"
+# 
+#       - name: Configure AWS credentials
+#         id: creds
+#         uses: aws-actions/configure-aws-credentials@v4
+#         with:
+#           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+#           aws-region: eu-central-1
+# 
+#       - name: Retrieve default VPC ID and public subnets
+#         id: vpc
+#         run: |
+#           VPC_ID=`aws ec2 describe-vpcs --filters "Name=isDefault, Values=true" --query 'Vpcs[].VpcId' --output text`
+#           echo "vpc-id=$VPC_ID" >> "$GITHUB_OUTPUT"
+# 
+#           SUBNET_1=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=$VPC_ID" "Name=default-for-az,Values=true" --query 'Subnets[0].SubnetId' --output text`
+#           echo "subnet-one=$SUBNET_1" >> "$GITHUB_OUTPUT"
+# 
+#           SUBNET_2=`aws ec2 describe-subnets --filters "Name=vpc-id,Values=$VPC_ID" "Name=default-for-az,Values=true" --query 'Subnets[1].SubnetId' --output text`
+#           echo "subnet-two=$SUBNET_2" >> "$GITHUB_OUTPUT"
+# 
+#       - name: Create S3 bucket if not exists
+#         run: |
+#           BUCKET_NAME="nuxt-typeorm-serverless-bucket"
+#           if ! aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
+#             aws s3api create-bucket --bucket "$BUCKET_NAME" --region eu-central-1 --create-bucket-configuration LocationConstraint=eu-central-1
+#             aws s3api put-bucket-versioning --bucket "$BUCKET_NAME" --versioning-configuration Status=Enabled
+#           fi
+# 
+#       - name: Install dependencies
+#         run: npm install
+# 
+#       - name: Build Nuxt app
+#         run: npm run build
+# 
+#       - name: Archive build folder
+#         run: zip -r app.zip .output
+# 
+#       - name: Upload to S3
+#         run: aws s3 cp app.zip s3://nuxt-typeorm-serverless-bucket/app.zip
+# 
+#       - name: Deploy CloudFormation stack
+#         run: |
+#           aws cloudformation deploy \
+#             --stack-name test-lambda-stack \
+#             --template-file cloudformation/serverless.yml \
+#             --parameter-overrides \
+#               ApiGatewayName=test-web-api \
+#               LambdaName=test-website-lambda \
+#               LambdaBucket=nuxt-typeorm-serverless-bucket \
+#               LambdaUrl=app.zip \
+#               LambdaRoleArnName=LambdaRole-TestWeb \
+#               LambdaFunctionArnName=LambdaArn-TestWeb \
+#               LambdaRoleName=test-website-lambda-role \
+#               VpcId=${{ steps.vpc.outputs.vpc-id }} \
+#               PublicSubnetOne=${{ steps.vpc.outputs.subnet-one }} \
+#               PublicSubnetTwo=${{ steps.vpc.outputs.subnet-two }} \
+#               DBName=${{ secrets.DB_NAME }} \
+#               DBUsername=${{ secrets.DB_USERNAME }} \
+#               DBPassword=${{ secrets.DB_PASSWORD }} \
+#               DBPort=${{ secrets.DB_PORT }} \
+#             --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM
+# 
+#       - name: Update Lambda function code
+#         run: |
+#           aws lambda update-function-code \
+#             --function-name test-website-lambda \
+#             --s3-bucket nuxt-typeorm-serverless-bucket \
+#             --s3-key app.zip
