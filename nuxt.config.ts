@@ -1,11 +1,22 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-	compatibilityDate: '2024-11-01',
-	devtools: { enabled: true },
+	compatibilityDate: '2025-02-12',
 
-	modules: [
-		'nuxt-server-fn',
-	],
+	features: {
+		inlineStyles: false,
+	},
+
+	modules:
+		["@nuxtjs/tailwindcss", 'shadcn-nuxt', 'nuxt-server-fn',],
+
+	shadcn: {
+		prefix: '',
+		componentDir: './components/ui',
+	},
+
+	build: {
+		transpile: ['trpc-nuxt']
+	},
 
 	nitro: {
 		preset: "aws-lambda",
@@ -42,5 +53,13 @@ export default defineNuxtConfig({
 			}
 		}
 	},
+
+	devtools: {
+		enabled: true,
+
+		timeline: {
+			enabled: true
+		}
+	}
 
 })
