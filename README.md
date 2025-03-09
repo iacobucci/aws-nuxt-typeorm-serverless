@@ -26,7 +26,7 @@ repository di github di interesse.
 export GIHTUB_ORG=iacobucci
 export REPOSITORY_NAME=cfn-nuxt-typeorm-lambda-aurora
 aws cloudformation deploy \
-	--stack-name github-actions-cloudformation-deploy-setup \
+	--stack-name $REPOSITORY_NAME-iam \
 	--template-file cloudformation/setup.yml \
 	--capabilities CAPABILITY_NAMED_IAM \
 	--region eu-central-1 \
