@@ -9,10 +9,7 @@ export class User extends BaseEntity {
 	id: number = 0;
 
 	@Column({ type: "varchar", length: 100 })
-	firstName: string = "";
-
-	@Column({ type: "varchar", length: 100 })
-	lastName: string = "";
+	username: string = "";
 
 	@OneToMany(() => Message, message => message.from)
 	sentMessages: Message[];
@@ -30,18 +27,18 @@ export class User extends BaseEntity {
 	@JoinTable({ name: "user_friends" })
 	friends: User[];
 
-	@ManyToMany(() => User, (user) => user.followers)
+	@ManyToMany(() => User, (user) => user.followers, { cascade: true })
 	@JoinTable({ name: "user_following" })
 	following: User[];
 
 	@ManyToMany(() => User, (user) => user.following)
 	followers: User[];
 
-	constructor() {
-		super();
+	representation(): string {
+		return "@" + this.username;
 	}
 
-	fullName(): string {
-		return `${this.firstName} ${this.lastName}`;
+	constructor() {
+		super();
 	}
 }

@@ -19,32 +19,25 @@ npx nuxi dev
 
 ## Creazione dell'infrastruttura AWS
 
-Avviare la creazione dello stack che effettua la connessione OIDC alla
-repository di github di interesse.
+Configurare le credenziali AWS dopo l'installazione della CLI.
 
 ```
-export GIHTUB_ORG=iacobucci
-export REPOSITORY_NAME=cfn-nuxt-typeorm-lambda-aurora
-aws cloudformation deploy \
-	--stack-name $REPOSITORY_NAME-iam \
-	--template-file cloudformation/setup.yml \
-	--capabilities CAPABILITY_NAMED_IAM \
-	--region eu-central-1 \
-	--parameter-overrides GitHubOrg=$GITHUB_ORG RepositoryName=$REPOSITORY_NAME
+aws configure
 ```
 
-Creare una nuova repository github, pubblica o privata.
+Poi creare nella dashboard un ruolo IAM con i permessi completi
 
 Impostare i secrets di github actions:
 
 ![secrets](./res/aggiunta-secrets.png)
 
-| nome secret    | valore                                                                          |
-| -------------- | ------------------------------------------------------------------------------- |
-| AWS_ACCOUNT_ID | copiare l'output di `aws sts get-caller-identity --query Account --output text` |
-| DB_PORT        | \*\*\*                                                                          |
-| DB_NAME        | \*\*\*                                                                          |
-| DB_USERNAME    | \*\*\*                                                                          |
-| DB_PASSWORD    | \*\*\*                                                                          |
+| nome secret           | valore |
+| --------------------- | ------ |
+| AWS_ACCESS_KEY_ID     | \*\*\* |
+| AWS_ACCESS_KEY_SECRET | \*\*\* |
+| DB_PORT               | \*\*\* |
+| DB_NAME               | \*\*\* |
+| DB_USERNAME           | \*\*\* |
+| DB_PASSWORD           | \*\*\* |
 
 Fare un push su master.

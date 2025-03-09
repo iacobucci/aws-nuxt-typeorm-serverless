@@ -23,4 +23,12 @@ logs
 .env.*
 !.env.example
 
+# Build zip
 app.zip
+
+# Database files
+postgres
+*.sqlite
+
+# Test results
+test-results

@@ -1,10 +1,8 @@
-<script setup lang="ts"></script>
+<script setup>
+</script>
 
 <template>
-  <div>
-    Layout: default
-    <slot />
-  </div>
+	<div className="flex flex-col space-y-4">
+		<slot />
+	</div>
 </template>
-
-<style scoped></style>
