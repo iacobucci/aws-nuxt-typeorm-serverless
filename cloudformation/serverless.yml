@@ -267,7 +267,7 @@ Resources:
       - DBInstance
     Properties:
       # ProvisionedConcurrencyConfig:
-      #   ProvisionedConcurrentExecutions: 1 # Rendi 1 funzione smpre disponibile
+      #   ProvisionedConcurrentExecutions: 1 # Rendi 1 funzione sempre disponibile
       FunctionName: !Ref "LambdaName"
       Description: LambdaFunction for test website
       Runtime: "nodejs18.x"
