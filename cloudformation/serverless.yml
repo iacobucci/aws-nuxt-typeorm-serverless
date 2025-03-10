@@ -76,19 +76,19 @@ Resources:
           FromPort: !Ref DBPort
           ToPort: !Ref DBPort
           SourceSecurityGroupId: !GetAtt LambdaSecurityGroup.GroupId
-        - IpProtocol: tcp
-          FromPort: !Ref "DBPort"
-          ToPort: !Ref "DBPort"
-          CidrIp: 0.0.0.0/0 # ⚠️ Accessibile da internet per debug
+        # - IpProtocol: tcp
+        #   FromPort: !Ref "DBPort"
+        #   ToPort: !Ref "DBPort"
+        #   CidrIp: 0.0.0.0/0 # ⚠️ Accessibile da internet per debug
       SecurityGroupEgress:
         - IpProtocol: tcp
           FromPort: !Ref "DBPort"
           ToPort: !Ref "DBPort"
           DestinationSecurityGroupId: !GetAtt LambdaSecurityGroup.GroupId
-        - IpProtocol: tcp
-          FromPort: !Ref "DBPort"
-          ToPort: !Ref "DBPort"
-          CidrIp: 0.0.0.0/0 # ⚠️
+        # - IpProtocol: tcp
+        #   FromPort: !Ref "DBPort"
+        #   ToPort: !Ref "DBPort"
+        #   CidrIp: 0.0.0.0/0 # ⚠️
       Tags:
         - Key: Name
           Value: !Sub ${AWS::StackName}-db-sg
